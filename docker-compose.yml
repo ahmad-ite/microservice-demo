@@ -7,12 +7,20 @@ services:
         image: microservice/demo/user
         restart: "no"
         environment:
+            # ORACLE_HOST ENV 
             - DB_URI=mongodb://mongo:27017/
             - DB_NAME=Microservice-demo-user
+            # ORACLE_HOST ENV 
+            - ORACLE_HOST=oracle-db
+            - ORACLE_PORT=1521
+            - ORACLE_USER=user
+            - ORACLE_PASSWORD=pass
         ports:
             - 8080:50051
         depends_on:
             - mongo
+            - oracle-db
+            - oracle-db2
 
     project:
         build:
@@ -109,8 +117,44 @@ services:
             - mongodb:/data/db
             - mongodb_config:/data/configdb
 
+    oracle-db:
+        image: daggerok/oracle:xe
+        restart: "no"
+        environment:
+            DB_SID: ORCLCDB
+            DB_MEMORY: 2048
+            DB_CREATE_TYPE: GENERAL_PURPOSE
+            DB_CHARSET: AL32UTF8
+        ports:
+            - "1521:1521"
+            - "5500:5500"
+        volumes:
+            - oracle_db:/opt/oracle/oradata
+            - oracle_setup:/opt/oracle/scripts/setup
+            - oracle_init:/docker-entrypoint-initdb.d
+        shm_size: '2gb'
+
+
+    oracle-db2:
+        image: oracleinanutshell/oracle-xe-11g
+        container_name: oracle-db2
+        ports:
+            - "1522:1522"
+        volumes:
+            - oracle_db2:/u01/app/oracle/oradata/XE
+        environment:
+            - ORACLE_ALLOW_REMOTE=true
+            - ORACLE_DISABLE_ASYNCH_IO=true
+        shm_size: '2gb'
+
+
 volumes:
     postgresdb:
     mysqldb:
     mongodb:
     mongodb_config:
+    oracle_db:
+    oracle_setup:
+    oracle_init:
+    oracle_db2:
+    
